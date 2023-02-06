@@ -1,10 +1,14 @@
 import pygraphviz as pgv
 
-g = pgv.AGraph(strict=True, directed=True)
+g = pgv.AGraph("input.dot")
 
-g.add_node("Node1", label="abc")
-g.add_node("Node2", label="def")
-g.add_edge("Node1", "Node2")
+for n in g.nodes_iter():
+    assert "label" in n.attr.keys()
+    l = n.attr["label"]
+    print(n.get_name(), l)
 
-g.write("hmm.dot")
+for e in g.edges_iter():
+    l0 = g.get_node(e[0]).attr["label"]
+    l1 = g.get_node(e[1]).attr["label"]
+    print(f"{l0} -> {l1}")
 
