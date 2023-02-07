@@ -15,7 +15,7 @@ class NodeTranslator:
         for n in self.g.nodes_iter():
             assert "label" in n.attr.keys()
             d = {
-                "label": n.attr["label"]
+                "label": n.attr["label"].replace('\\l', '')
             }
 
             if "url" in n.attr.keys():
