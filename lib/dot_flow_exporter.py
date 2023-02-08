@@ -22,6 +22,9 @@ f'- {v["dflw_name"]} | {v["label"]}()\\n\\n{v["src_file"]}\\n{v["src_line"]}\n\n
                 n0 = self.node_lookup[ self.g.get_node(e[0]).get_name() ]
                 n1 = self.node_lookup[ self.g.get_node(e[1]).get_name() ]
 
+                if 'dir' in e.attr.keys() and e.attr['dir'] == 'back':
+                    n1,n0 = n0,n1
+
                 outF.write( \
 f'< {n0["dflw_name"]}\n' \
                 )
