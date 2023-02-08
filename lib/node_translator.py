@@ -1,6 +1,11 @@
+import os
+import re
 import json
 import pygraphviz as pgv
 from pathlib import Path
+
+# Example string: '<b>Definition:</b> audio_datapath.c:763</div>'
+DEFINITION_REGEX = re.compile(r'<b>Definition:</b> (\w+\.\w+):(\d+)</div>')
 
 class NodeTranslator:
     def __init__(self, input_dot_file: Path):
@@ -18,10 +23,49 @@ class NodeTranslator:
                 "label": n.attr["label"].replace('\\l', '')
             }
 
-            if "url" in n.attr.keys():
-                d["url"] = n.attr["url"]
+            if "URL" in n.attr.keys():
+                src_file, line_num = self._derive_source_from_URL(n.attr["URL"], d["label"])
+            else:
+                src_file, line_num = self._derive_source_from_in_stem(d["label"])
+
+            d["src_file"] = src_file
+            d["src_line"] = line_num
 
             self.nodes[n.get_name()] = d
+
+    def _derive_source_from_in_stem(self, method_name: str) -> tp.Tuple[str, int]:
+        tokens = self.in_stem.split('_')
+        assert tokens[-1].endswith('cgraph'), f"Expected {self.in_stem}.dot stem to end in cgraph"
+        assert tokens[-3] in ['8h', '8c'], f"Expected '_8h_' or '_8c_' before the hash in {self.in_stem}.dot stem"
+        tokens[-3] = "8h_source.html"
+
+        src_html_file = '_'.join(tokens[:-2])
+
+        return self._parse_src_html_for_line_num(self.in_parent / src_html_file, method_name)
+
+    def _derive_source_from_URL(self, url: str, method_name: str) -> tp.Tuple[str, int]:
+        assert ".html" in url, f"Expected {method_name} to have a URL with '.html' in it, got {url}"
+        url_stem = url.split('.html')[0]
+        if url_stem.startswith('$'):
+            url_stem = url_stem[1:]
+
+        assert url_stem[-2:] in ('8c', '8h'), f"Expected {method_name} to have a URL stem ending in either '8c' or '8h', got {url}"
+
+        src_html_file = url_stem[:-2] + '8h_source.html'
+
+        return self._parse_src_html_for_line_num(self.in_parent / src_html_file, method_name)
+
+    def _parse_src_html_for_line_num(self, src_html_file: Path, method_name) -> tp.Tuple[str, int]:
+        method_name = f" {method_name}("
+
+        assert os.path.exists(src_html_file)
+        with open(src_html_file, "r") as inF:
+            for line in inF:
+                if method_name in line:
+                    m = DEFINITION_REGEX.search(line)
+                    if m:
+                        # .c file name and line number
+                        return m.group(1), int(m.group(2))
 
     def write_node_summary(self, outdir: Path):
         outpath = outdir / f"{self.in_stem}.nsumm"
