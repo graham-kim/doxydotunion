@@ -2,6 +2,7 @@ import os
 import argparse
 from pathlib import Path
 from lib.node_translator import NodeTranslator
+from lib.dot_flow_exporter import DotFlowExporter
 
 def setup_arg_parse():
     desc="some description"
@@ -20,4 +21,7 @@ if __name__ == '__main__':
 
     t = NodeTranslator(args.input_file)
     t.write_node_summary(args.outdir)
+
+    e = DotFlowExporter(args.input_file, t)
+    e.write_dflow_file(args.outdir)
 

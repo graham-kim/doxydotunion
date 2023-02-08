@@ -34,6 +34,7 @@ class NodeTranslator:
 
             d["src_file"] = src_file
             d["src_line"] = line_num
+            d["dflw_name"] = src_file.replace('.', '_8') + "__" + d["label"]
 
             self.nodes[n.get_name()] = d
 
@@ -94,12 +95,4 @@ class NodeTranslator:
         with open(in_nsumm_file, "r") as inF:
             self.nodes = json.load(inF)
 
-
-
-def test_edge_iter():
-    """Unused example"""
-    for e in g.edges_iter():
-        l0 = g.get_node(e[0]).attr["label"]
-        l1 = g.get_node(e[1]).attr["label"]
-        print(f"{l0} -> {l1}")
 
