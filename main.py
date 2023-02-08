@@ -1,3 +1,19 @@
+"""
+Get *cgraph.dot and *icgraph.dot input files by doing this:
+
+doxygen -g hmm.doxy
+
+EXTRACT_ALL     = YES
+EXTRACT_PRIVATE = YES
+RECURSIVE       = YES
+HAVE_DOT        = YES
+DOT_CLEANUP     = NO
+CALL_GRAPH      = YES
+CALLER_GRAPH    = YES
+
+doxygen hmm.doxy
+"""
+
 import os
 import argparse
 from pathlib import Path
