@@ -1,3 +1,4 @@
+import typing as tp
 import os
 import re
 import json
@@ -28,6 +29,9 @@ class NodeTranslator:
             else:
                 src_file, line_num = self._derive_source_from_in_stem(d["label"])
 
+            if src_file is None:
+                src_file, line_num = self._scan_all_html_sources_for_src_file(d["label"])
+
             d["src_file"] = src_file
             d["src_line"] = line_num
 
@@ -55,10 +59,12 @@ class NodeTranslator:
 
         return self._parse_src_html_for_line_num(self.in_parent / src_html_file, method_name)
 
-    def _parse_src_html_for_line_num(self, src_html_file: Path, method_name) -> tp.Tuple[str, int]:
+    def _parse_src_html_for_line_num(self, src_html_file: Path, method_name: str) -> tp.Tuple[str, int]:
         method_name = f" {method_name}("
 
-        assert os.path.exists(src_html_file)
+        if not os.path.exists(src_html_file):
+            return None, None
+
         with open(src_html_file, "r") as inF:
             for line in inF:
                 if method_name in line:
@@ -66,6 +72,18 @@ class NodeTranslator:
                     if m:
                         # .c file name and line number
                         return m.group(1), int(m.group(2))
+
+        return None, None
+
+    def _scan_all_html_sources_for_src_file(self, method_name: str) -> tp.Tuple[str, int]:
+        all_src_files = self.in_parent / "*source.html"
+        for filename in self.in_parent.glob("*source.html"):
+            src_file, line_num = self._parse_src_html_for_line_num(filename, method_name)
+            if src_file is not None:
+                return src_file, line_num
+
+        raise Exception(f"No src_file and line num could be found for {method_name}")
+        return None, None
 
     def write_node_summary(self, outdir: Path):
         outpath = outdir / f"{self.in_stem}.nsumm"
