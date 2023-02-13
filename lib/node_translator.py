@@ -14,10 +14,21 @@ class NodeTranslator:
         self.in_stem = input_dot_file.stem
         self.in_parent = input_dot_file.resolve().parent
 
+        self._derive_out_stem()
         self._parse_nodes_for_summary()
 
+    def _derive_out_stem(self):
+        tokens = self.in_stem.split('_')
+        assert tokens[-1].endswith('cgraph'), f"Expected {self.in_stem}.dot stem to end in cgraph"
+        assert tokens[-3] in ['8h', '8c'], f"Expected '_8h_' or '_8c_' before the hash in {self.in_stem}.dot stem"
+        tokens[-2] = self.g.get_name()
+
+        self.out_stem = "_".join(tokens)
+
     def _parse_nodes_for_summary(self):
-        self.nodes = {}
+        self.nodes = {
+            "original_filename": self.in_stem + ".dot"
+        }
         for n in self.g.nodes_iter():
             assert "label" in n.attr.keys()
             d = {
@@ -46,8 +57,6 @@ class NodeTranslator:
 
     def _derive_source_from_in_stem(self, method_name: str) -> tp.Tuple[str, int]:
         tokens = self.in_stem.split('_')
-        assert tokens[-1].endswith('cgraph'), f"Expected {self.in_stem}.dot stem to end in cgraph"
-        assert tokens[-3] in ['8h', '8c'], f"Expected '_8h_' or '_8c_' before the hash in {self.in_stem}.dot stem"
         tokens[-3] = "8h_source.html"
 
         src_html_file = '_'.join(tokens[:-2])
@@ -92,9 +101,10 @@ class NodeTranslator:
         return None, None
 
     def write_node_summary(self, outdir: Path):
-        outpath = outdir / f"{self.in_stem}.nsumm"
+        outpath = outdir / f"{self.out_stem}.nsumm"
         with open(outpath, "w") as outF:
             json.dump(self.nodes, outF, indent=4)
+        print(f"Wrote {outpath}")
 
     def read_node_summary(self, in_nsumm_file: Path):
         with open(in_nsumm_file, "r") as inF:

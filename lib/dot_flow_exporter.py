@@ -6,14 +6,17 @@ from lib.node_translator import NodeTranslator
 class DotFlowExporter:
     def __init__(self, input_dot_file: Path, node_t: NodeTranslator):
         self.g = pgv.AGraph(input_dot_file)
-        self.in_stem = input_dot_file.stem
+        self.out_stem = node_t.out_stem
         self.in_parent = input_dot_file.resolve().parent
         self.node_lookup: tp.Dict[str, tp.Dict[str, tp.Any]] = node_t.nodes
 
     def write_dflow_file(self, outdir: Path):
-        outpath = outdir / f"{self.in_stem}.dflw"
+        outpath = outdir / f"{self.out_stem}.dflw"
         with open(outpath, "w") as outF:
-            for v in self.node_lookup.values():
+            for k,v in self.node_lookup.items():
+                if k == "original_filename":
+                    continue
+
                 outF.write( \
 f'- {v["dflw_name"]} | {v["label"]}()\\n\\n{v["src_file"]}\\n{v["src_line"]}\n\n' \
                 )
