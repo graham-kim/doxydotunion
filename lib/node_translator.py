@@ -32,9 +32,15 @@ class NodeTranslator:
             if src_file is None:
                 src_file, line_num = self._scan_all_html_sources_for_src_file(d["label"])
 
+                if src_file is None:
+                    src_file = "UNKNOWN.c"
+                    line_num = -1
+                else:
+                    src_file = src_file + " MAYBE "
+
             d["src_file"] = src_file
             d["src_line"] = line_num
-            d["dflw_name"] = src_file.replace('.', '_8') + "__" + d["label"]
+            d["dflw_name"] = src_file.replace(' MAYBE ', '').replace('.', '_8') + "__" + d["label"]
 
             self.nodes[n.get_name()] = d
 
@@ -83,7 +89,6 @@ class NodeTranslator:
             if src_file is not None:
                 return src_file, line_num
 
-        raise Exception(f"No src_file and line num could be found for {method_name}")
         return None, None
 
     def write_node_summary(self, outdir: Path):
